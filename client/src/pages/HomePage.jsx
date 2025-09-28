@@ -12,8 +12,6 @@ function HomePage() {
     // }
   }, []);
 
-  console.log("HomePage, Jobs:", jobs);
-
   return (
     <div>
       <h1 className="title">
