@@ -22,12 +22,37 @@ export const resolvers = {
     },
 
     Mutation: {
-        createJob: (_root, { input: { title, description }}) => {
-            const companyId = "FjcJCHJALA4i"; // TODO: Change when doing Auth
-            return createJob({ companyId, title, description });
+        createJob: async (_root, { input: { title, description } }, context) => {
+            if (!context.user) {
+                throw unauthorisedError("Missing authentication");
+            }
+            const companyId = context.user.companyId;
+            return await createJob({ companyId, title, description });
         },
-        updateJob: (_root, {input: { id, title, description }}) => updateJob({ id, title, description }),
-        deleteJob: (_root, { id }) => deleteJob(id),
+        updateJob: async (_root, { input: { id, title, description } }, { user }) => {
+            if (!user) {
+                throw unauthorisedError("Missing authentication");
+            }
+            const job = await updateJob({ id, title, description, companyId: user.companyId });
+            if (!job) {
+                throw notFoundError("No Job found with id " + id);
+            }
+            return job;
+        },
+        
+        
+        deleteJob: async (_root, { id }, { user }) => {
+            if (!user) {
+                throw unauthorisedError("Missing authentication");
+            }
+            // getJob
+            // check that job.companyId === user.companyId
+            const job = await deleteJob(id, user.companyId);
+            if (!job) {
+                throw notFoundError("No Job found with id " + id);
+            }
+            return job;
+        },
     },
 
     Company: {
@@ -48,6 +73,14 @@ function notFoundError(message) {
     return new GraphQLError(message, {
         extensions: {
             code: "NOT_FOUND",
+        }
+    });
+}
+
+function unauthorisedError(message) {
+    return new GraphQLError(message, {
+        extensions: {
+            code: "UNAUTHORISED",
         }
     });
 }
