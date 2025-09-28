@@ -1,5 +1,5 @@
 import {  GraphQLError } from "graphql";
-import { getJob, getJobs, getJobsByCompany } from "./db/jobs.js";
+import { createJob, deleteJob, getJob, getJobs, getJobsByCompany, updateJob } from "./db/jobs.js";
 import { getCompany } from "./db/companies.js";
 
 export const resolvers = {
@@ -19,6 +19,15 @@ export const resolvers = {
             return job;
         },
         jobs: async () => await getJobs(),
+    },
+
+    Mutation: {
+        createJob: (_root, { input: { title, description }}) => {
+            const companyId = "FjcJCHJALA4i"; // TODO: Change when doing Auth
+            return createJob({ companyId, title, description });
+        },
+        updateJob: (_root, {input: { id, title, description }}) => updateJob({ id, title, description }),
+        deleteJob: (_root, { id }) => deleteJob(id),
     },
 
     Company: {

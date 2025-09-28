@@ -41,7 +41,25 @@ export async function updateJob({ id, title, description }) {
   if (!job) {
     throw new Error(`Job not found: ${id}`);
   }
+  if (!title) {
+    title = undefined;
+  }
+  if (!description) {
+    description = undefined;
+  }
   const updatedFields = { title, description };
-  await getJobTable().update(updatedFields).where({ id });
+
+  try {
+    await getJobTable().update(updatedFields).where({ id });
+  } catch (err) {
+    console.error(err.message);
+  }
+
+  if (updatedFields.title === undefined) {
+    updatedFields.title = job.title;
+  }
+  if (updatedFields.description === undefined) {
+    updatedFields.description = job.description;
+  }
   return { ...job, ...updatedFields };
 }
