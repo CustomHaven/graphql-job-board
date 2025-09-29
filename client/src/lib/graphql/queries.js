@@ -1,6 +1,18 @@
-import { GraphQLClient, gql } from "graphql-request";
+import { ApolloClient, HttpLink, gql, InMemoryCache } from "@apollo/client";
+import { jobByIdQuery } from "./globalQueries";
 
-const client = new GraphQLClient("http://localhost:9000/graphql");
+const apolloClient = new ApolloClient({
+    link: new HttpLink({ uri: "http://localhost:9000/graphql" }),
+    cache: new InMemoryCache(),
+    defaultOptions: {
+        query: {
+            fetchPolicy: "network-only"
+        },
+        watchQuery: {
+            fetchPolicy: "network-only"
+        }
+    }
+});
 
 export async function getCompany(id) {
     const query = gql`
@@ -17,27 +29,21 @@ export async function getCompany(id) {
             }
         }
     `;
-    const data = await client.request(query, { id });
+
+    const { data } = await apolloClient.query({
+        query,
+        variables: {
+            id
+        } 
+    });
     return data.company;
 };
 
 export async function getJob(id) {
-    const query = gql`
-        query JobById($id: ID!) {
-            job(id: $id) {
-                id
-                date
-                title
-                company {
-                    id
-                    name
-                }
-                description
-            }
-        }
-    `;
-
-    const data = await client.request(query, { id });
+    const { data } = await apolloClient.query({
+        query: jobByIdQuery,
+        variables: { id },
+    });
     return data.job;
 }
 
@@ -52,9 +58,13 @@ export async function getJobs() {
                     id
                     name
                 }
+                description
             }
         }
     `;
-    const data = await client.request(query);
+    const { data } = await apolloClient.query({
+        query,
+        // fetchPolicy: "network-only"
+    });
     return data.jobs;
 }
